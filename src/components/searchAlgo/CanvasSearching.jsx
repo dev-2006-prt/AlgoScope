@@ -144,23 +144,39 @@ export const CanvasSearching = ({
     }
 
     useEffect(() => {
-  let network;
+  let network = null;
+  let isMounted = true;
 
-  async function initNetwork() {
+  (async () => {
     const { Network } = await import("vis-network");
+
+    if (!isMounted || !containerRef.current) return;
 
     network = new Network(
       containerRef.current,
       data,
       options
     );
-  }
 
-  initNetwork();
+    // Store refs
+    networkRef.current = network;
+
+    // Any post-initialization work
+    scheduleNetworkReady(network, () => {
+      console.log("Network ready");
+    });
+  })();
 
   return () => {
+    isMounted = false;
+
     if (network) {
       network.destroy();
+      network = null;
+    }
+
+    if (networkRef.current === network) {
+      networkRef.current = null;
     }
   };
 }, []);
